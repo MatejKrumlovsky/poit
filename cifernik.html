@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ciferník natočenia serva</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f8f8f8;
+      text-align: center;
+      padding: 30px;
+    }
+    canvas {
+      max-width: 400px;
+      margin: auto;
+    }
+    #hodnota {
+      font-size: 24px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    nav {
+      margin-top: 30px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ciferník natočenia serva</h1>
+  <canvas id="gauge" width="400" height="400"></canvas>
+  <div id="hodnota">Aktuálna hodnota: 0°</div>
+
+  <nav>
+    <a href="/">Späť na hlavnú stránku</a>
+  </nav>
+
+  <script>
+    const ctx = document.getElementById('gauge').getContext('2d');
+    const gaugeChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pozícia', 'Zostatok'],
+        datasets: [{
+          data: [0, 180],
+          backgroundColor: ['#007bff', '#e0e0e0'],
+          borderWidth: 0,
+          cutout: '80%',
+          rotation: -90,
+          circumference: 180
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+
+    async function fetchData() {
+      const res = await fetch('/data');
+      const data = await res.json();
+      if (data.length > 0) {
+        const posledna = data[data.length - 1].y;
+        gaugeChart.data.datasets[0].data = [posledna, 180 - posledna];
+        gaugeChart.update();
+        document.getElementById("hodnota").textContent = `Aktuálna hodnota: ${posledna}°`;
+      }
+    }
+
+    setInterval(fetchData, 1000);
+    fetchData();
+  </script>
+</body>
+</html>

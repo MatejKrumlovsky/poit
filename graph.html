@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ovládanie systému</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+      padding: 40px;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 25px;
+      margin: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    button:hover:enabled {
+      background-color: #0056b3;
+    }
+    nav a {
+      margin: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #007BFF;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    nav a.enabled {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    #output {
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      height: 300px;
+      width: 80%;
+      margin: 30px auto;
+      overflow-y: auto;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ovládanie systému</h1>
+
+  <button id="openBtn" onclick="sendCommand('OPEN')">Open</button>
+  <button id="startBtn" onclick="sendCommand('START')" disabled>Start</button>
+  <button id="stopBtn" onclick="sendCommand('STOP')" disabled>Stop</button>
+  <button id="closeBtn" onclick="sendCommand('CLOSE')" disabled>Close</button>
+
+
+  <nav>
+    <a href="/cifernik" id="cifLink">Ciferník</a>
+    <a href="/graf" id="grafLink">Časový graf</a>
+  </nav>
+
+  <h2>Výpis údajov zo senzora:</h2>
+  <pre id="output">Načítavam údaje...</pre>
+
+  <script>
+    let monitoringActive = false;
+
+    function sendCommand(cmd) {
+      fetch(`/command/${cmd}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Chyba príkazu: ${res.status}`);
+          return res.text();
+        })
+        .then(msg => {
+          console.log("Odpoveď servera:", msg);
+          if (cmd === 'OPEN') {
+            document.getElementById('openBtn').disabled = true;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('closeBtn').disabled = false;
+            document.getElementById('cifLink').classList.add('enabled');
+            document.getElementById('grafLink').classList.add('enabled');
+          } else if (cmd === 'START') {
+            monitoringActive = true;
+          } else if (cmd === 'STOP') {
+            monitoringActive = false;
+          } else if (cmd === 'CLOSE') {
+            window.location.href = '/';
+          }
+        })
+        .catch(err => {
+          console.error("Chyba pri odosielaní príkazu:", err);
+          alert("Nepodarilo sa vykonať príkaz: " + cmd);
+        });
+    }
+
+    async function fetchData() {
+      const res = await fetch('/data');
+      const data = await res.json();
+      const output = document.getElementById('output');
+
+      const content = data.length > 0
+        ? data.map((d, i) => `${i + 1}. → ${d.y}°`).join("\n")
+        : "Žiadne údaje (stlač OPEN a potom START)";
+
+      output.textContent = content;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    setInterval(fetchData, 1000);
+    fetchData();
+  </script>
+
+</body>
+</html>

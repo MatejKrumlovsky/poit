@@ -89,7 +89,7 @@
         chart.data.labels.push(seconds);
         chart.data.datasets[0].data.push(last.y);
 
-        if (chart.data.labels.length > 50) { // obmedzenie počtu bodov zobrazených naraz
+        if (chart.data.labels.length > 50) { 
           chart.data.labels.shift();
           chart.data.datasets[0].data.shift();
         }

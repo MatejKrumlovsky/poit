@@ -8,7 +8,7 @@ import signal
 
 app = Flask(__name__)
 
-SERIAL_PORT = '/dev/ttyACM0'  # uprav podla svojho zariadenia
+SERIAL_PORT = '/dev/ttyACM0'  
 BAUD_RATE = 9600
 ser = None
 

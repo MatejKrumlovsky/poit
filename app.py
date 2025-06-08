@@ -12,12 +12,12 @@ SERIAL_PORT = '/dev/ttyACM0'
 BAUD_RATE = 9600
 ser = None
 
-# Uchovavame data (timestamp, hodnota)
+
 data_points = []
 read_serial_active = False
-system_initialized = False  # kontrola, ci bolo stlacene OPEN
+system_initialized = False  
 
-# Funkcia na citanie dat zo serioveho portu
+
 def read_serial():
     global data_points, read_serial_active, ser
     while True:
@@ -27,7 +27,7 @@ def read_serial():
                 timestamp = time.time()
                 value = int(line)
                 data_points.append({"x": timestamp, "y": value})
-        time.sleep(0.01)  # rýchlejšie čítanie
+        time.sleep(0.01)  
 
 @app.route('/')
 def index():
@@ -61,7 +61,7 @@ def send_command(cmd):
             return "Systém už je inicializovaný", 400
         try:
             ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-            time.sleep(2)  # Čakaj na inicializáciu Arduina
+            time.sleep(2)  
             ser.write(b'OPEN\n')
             system_initialized = True
             return "Systém inicializovaný", 200
@@ -93,7 +93,7 @@ def send_command(cmd):
     else:
         return "Neplatný príkaz", 400
 
-# Spustenie vlakna na citanie az po OPEN
+
 if __name__ == '__main__':
     threading.Thread(target=read_serial, daemon=True).start()
     app.run(debug=True, host='0.0.0.0')

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Časový graf natočenia serva</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f8f8f8;
+      text-align: center;
+      padding: 30px;
+    }
+    canvas {
+      max-width: 800px;
+      margin: auto;
+    }
+    nav a {
+      margin: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #007BFF;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Časový graf natočenia serva</h1>
+
+  <canvas id="lineChart" width="800" height="400"></canvas>
+
+  <nav>
+    <a href="/">Späť na hlavnú stránku</a>
+    <a href="/cifernik">Ciferník</a>
+  </nav>
+
+  <script>
+    const ctx = document.getElementById('lineChart').getContext('2d');
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Natočenie serva (°)',
+          data: [],
+          borderColor: '#007BFF',
+          backgroundColor: 'rgba(0,123,255,0.2)',
+          tension: 0.2,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Čas (sekundy)'
+            }
+          },
+          y: {
+            min: 0,
+            max: 180,
+            title: {
+              display: true,
+              text: 'Uhol natočenia (°)'
+            }
+          }
+        },
+        animation: false,
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true
+          }
+        }
+      }
+    });
+
+    let startTime = Date.now();
+
+    async function updateChart() {
+      const res = await fetch('/data');
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const last = data[data.length - 1];
+        const seconds = ((last.x - startTime / 1000) / 1).toFixed(1);
+        chart.data.labels.push(seconds);
+        chart.data.datasets[0].data.push(last.y);
+
+        if (chart.data.labels.length > 50) { // obmedzenie počtu bodov zobrazených naraz
+          chart.data.labels.shift();
+          chart.data.datasets[0].data.shift();
+        }
+
+        chart.update();
+      }
+    }
+
+    setInterval(updateChart, 1000);
+  </script>
+
+</body>
+</html>

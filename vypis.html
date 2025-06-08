@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Výpis natočenia serva</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f8f8f8;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    pre {
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      height: 400px;
+      overflow-y: auto;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Výpis natočenia serva</h1>
+  <pre id="output">Načítavam údaje...</pre>
+
+  <script>
+  async function fetchData() {
+    const res = await fetch('/data');
+    const data = await res.json();
+    const output = document.getElementById('output');
+
+    
+    const content = data.length > 0
+      ? data.map((d, i) => `${i + 1}. → ${d.y}°`).join("\n")
+      : "Žiadne údaje zatiaľ dostupné";
+
+    output.textContent = content;
+
+    
+    requestAnimationFrame(() => {
+      output.scrollTop = output.scrollHeight;
+    });
+  }
+
+  setInterval(fetchData, 200);
+  fetchData();
+</script>
+</body>
+</html>

@@ -60,7 +60,6 @@
   <button id="stopBtn" onclick="sendCommand('STOP')" disabled>Stop</button>
   <button id="closeBtn" onclick="sendCommand('CLOSE')" disabled>Close</button>
 
-
   <nav>
     <a href="/cifernik" id="cifLink">Ciferník</a>
     <a href="/graf" id="grafLink">Časový graf</a>
@@ -71,49 +70,75 @@
 
   <script>
     let monitoringActive = false;
+    let posledneData = [];
 
-    function sendCommand(cmd) {
-      fetch(`/command/${cmd}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Chyba príkazu: ${res.status}`);
-          return res.text();
-        })
-        .then(msg => {
-          console.log("Odpoveď servera:", msg);
-          if (cmd === 'OPEN') {
-            document.getElementById('openBtn').disabled = true;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = false;
-            document.getElementById('closeBtn').disabled = false;
-            document.getElementById('cifLink').classList.add('enabled');
-            document.getElementById('grafLink').classList.add('enabled');
-          } else if (cmd === 'START') {
-            monitoringActive = true;
-          } else if (cmd === 'STOP') {
-            monitoringActive = false;
-          } else if (cmd === 'CLOSE') {
-            window.location.href = '/';
-          }
-        })
-        .catch(err => {
-          console.error("Chyba pri odosielaní príkazu:", err);
-          alert("Nepodarilo sa vykonať príkaz: " + cmd);
-        });
+    async function sendCommand(cmd) {
+      try {
+        const res = await fetch(`/command/${cmd}`);
+        if (!res.ok) throw new Error(await res.text());
+        const msg = await res.text();
+
+        console.log("Odpoveď servera:", msg);
+
+        if (cmd === 'OPEN') {
+          document.getElementById('openBtn').disabled = true;
+          document.getElementById('startBtn').disabled = false;
+          document.getElementById('stopBtn').disabled = false;
+          document.getElementById('closeBtn').disabled = false;
+          document.getElementById('cifLink').classList.add('enabled');
+          document.getElementById('grafLink').classList.add('enabled');
+        } else if (cmd === 'START') {
+          monitoringActive = true;
+        } else if (cmd === 'STOP') {
+          monitoringActive = false;
+        } else if (cmd === 'CLOSE') {
+          window.location.href = '/';
+        }
+      } catch (err) {
+        console.error("Chyba pri odosielaní príkazu:", err);
+        alert("Nepodarilo sa vykonať príkaz: " + cmd);
+      }
     }
 
     async function fetchData() {
-      const res = await fetch('/data');
-      const data = await res.json();
-      const output = document.getElementById('output');
+      try {
+        const res = await fetch('/data');
+        const data = await res.json();
+        if (data.length > 0) {
+          posledneData = data;
+        }
 
-      const content = data.length > 0
-        ? data.map((d, i) => `${i + 1}. → ${d.y}°`).join("\n")
-        : "Žiadne údaje (stlač OPEN a potom START)";
+        const output = document.getElementById('output');
+        const content = posledneData.length > 0
+          ? posledneData.map((d, i) => `${i + 1}. → ${d.y}°`).join("\n")
+          : "Žiadne údaje (stlač OPEN a potom START)";
 
-      output.textContent = content;
-      output.scrollTop = output.scrollHeight;
+        output.textContent = content;
+        output.scrollTop = output.scrollHeight;
+      } catch (err) {
+        console.error("Chyba pri načítaní dát:", err);
+      }
     }
 
+    async function checkStatus() {
+      try {
+        const res = await fetch('/status');
+        const status = await res.json();
+
+        if (status.initialized) {
+          document.getElementById('openBtn').disabled = true;
+          document.getElementById('startBtn').disabled = false;
+          document.getElementById('stopBtn').disabled = false;
+          document.getElementById('closeBtn').disabled = false;
+          document.getElementById('cifLink').classList.add('enabled');
+          document.getElementById('grafLink').classList.add('enabled');
+        }
+      } catch (err) {
+        console.error("Chyba pri zisťovaní stavu:", err);
+      }
+    }
+
+    checkStatus();
     setInterval(fetchData, 1000);
     fetchData();
   </script>
